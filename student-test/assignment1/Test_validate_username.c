@@ -15,8 +15,17 @@
 void test_validate_my_username()
 {
     /**
-     * TODO: Replace the line below with your code here as described above to verify your /conf/username.txt 
+     * TODO: Replace the line below with your code here as described above to verify your /conf/username.txt
      * config file and my_username() functions are setup properly
      */
-    TEST_ASSERT_TRUE_MESSAGE(false,"AESD students, please fix me!");
+
+    /**
+     * Fetching and comparing the github username from both the internally hardcoded source and from a file called, conf/username.txt.
+     */
+    char* read_username = malloc_username_from_conf_file();
+    printf("read_username: %s\n", read_username);
+    printf("my_username(): %s\n", my_username());
+    TEST_ASSERT_TRUE_MESSAGE(strcmp(my_username(), read_username) == 0, "The read username does not match!");
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(my_username(), read_username, "The read username does not match!");
+    free(read_username);
 }

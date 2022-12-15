@@ -1,6 +1,7 @@
 #!/bin/sh
 # Tester script for assignment 1 and assignment 2
 # Author: Siddhant Jajoo
+cd "$(dirname "$0")"
 
 set -e
 set -u
@@ -18,7 +19,7 @@ then
 		echo "Using default value ${NUMFILES} for number of files to write"
 	else
 		NUMFILES=$1
-	fi	
+	fi
 else
 	NUMFILES=$1
 	WRITESTR=$2
