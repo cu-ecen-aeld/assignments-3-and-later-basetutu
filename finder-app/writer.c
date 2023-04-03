@@ -21,10 +21,23 @@
 
 #include <errno.h>
 
+/**************************//**
+ * @brief Debug section
+ *****************************/
 // Log errors to console and stderr, and also log the PID with each message.
 #define LOG_OPTIONS                     (LOG_PID | LOG_CONS | LOG_PERROR)
 
-#define LOGD(...)                       syslog(LOG_DEBUG, __VA_ARGS__)
+#define LOGFATAL(...)                   syslog(LOG_EMERG,   __VA_ARGS__) /* system is unusable */
+#define LOGALERT(...)                   syslog(LOG_ALERT,   __VA_ARGS__) /* action must be taken immediately */
+#define LOGCRITICAL(...)                syslog(LOG_CRIT,    __VA_ARGS__) /* critical conditions */
+#define LOGE(...)                       syslog(LOG_ERR,     __VA_ARGS__) /* error conditions */
+#define LOGW(...)                       syslog(LOG_WARNING, __VA_ARGS__) /* warning conditions */
+#define LOGN(...)                       syslog(LOG_NOTICE,  __VA_ARGS__) /* normal but significant condition */
+#define LOGI(...)                       syslog(LOG_INFO,    __VA_ARGS__) /* informational */
+#define LOGD(...)                       syslog(LOG_DEBUG,   __VA_ARGS__) /* debug-level messages */
+// #define LOGV(...)                       syslog(LOG_LOCAL0,  __VA_ARGS__) /* reserved for local use (verbose) (not in use) */
+
+#define LOG_LEVEL                       LOG_DEBUG  // All levels
 
 #define PARAM_INPUT_WRITEFILE_IDX       0
 #define PARAM_INPUT_WRITESTR_IDX        1
@@ -61,7 +74,7 @@ readFile:
             return -2;
         } else if (bytesRead == -1) {  // Serious error
             perror ("read() failed");  // Print the error description.
-            syslog(LOG_ERR, "read() failed");  // Not recoverable error.
+            LOGE("read() failed");  // Not recoverable error.
             // We do not care if bytesRead_old != 0 here. (Read data will be lost)
             return -1;
         }
@@ -98,47 +111,49 @@ readFile:
 
 int main(int argc, char *argv[]) {
     openlog ("writer_app", LOG_OPTIONS, LOG_USER);
-    setlogmask (LOG_UPTO(LOG_DEBUG));
-    syslog (LOG_INFO, "---- Writer app start ----");
-    LOGD("---- Writer app start ----");
+    setlogmask (LOG_UPTO(LOG_LEVEL));
+    LOGI("---- Writer app start ----");
 
     // Index 0 is the name of the file!
     char* writefile = argv[1];
     char* writestr = argv[2];  // This index may not even exist. Check "argc >= 2" before use.
 
-    syslog (LOG_DEBUG, "argc = %d", argc);
+    LOGD("argc = %d", argc);
 
     // Check 'writefile' input:
     if (argc == 1) {
-        syslog (LOG_ERR, "Error: No input arguments were given.");
+        LOGE("Error: No input arguments were given.");
         exit(1);
     } else if (argc < 3) {
-        syslog (LOG_ERR, "Error: The write string argument was not given.");
+        LOGE("Error: The write string argument was not given.");
         exit(1);
     }
-
-    syslog (LOG_DEBUG, "1");
 
     // Check the path for being a directory:
     DIR *dir_stream_writefile = opendir(writefile);
     if (dir_stream_writefile != NULL) {
-        syslog (LOG_ERR, "The path given is not a file-path. (%s)", writefile);
+        LOGE("The path given is not a file-path. (%s)", writefile);
         if (closedir (dir_stream_writefile) != 0) {
-            syslog (LOG_ERR, "Failed to close directory stream properly.");
+            LOGE("Failed to close directory stream properly.");
         }
         exit(1);
     } else {
         perror("opendir()");
-        assert(errno == ENOTDIR || errno == ENOENT);  // Just checking expectation.
+        LOGE("errno: %d", errno);
+        LOGE("writefile: %s", writefile);
+        // A file with file-extension will generate EINVAL.
+        // A file without file extension will generate ENOTDIR.
+        // A non-existing path will generate ENOENT.
+        assert(errno == ENOTDIR || errno == ENOENT || errno == EINVAL);  // Just checking expectation.
     }
 
     size_t writestr_length = strlen(writestr);
 
     if (argc < 2 || writestr == NULL || writestr_length == 0) {
-        syslog (LOG_ERR, "Error: The write string argument was not given.");
+        LOGE("Error: The write string argument was not given.");
     }
     // Stating operation:
-    syslog (LOG_DEBUG, "Writing %s to %s.", writestr, writefile);
+    LOGD("Writing %s to %s.", writestr, writefile);
 
     /*
      * Write to file:
@@ -146,24 +161,23 @@ int main(int argc, char *argv[]) {
 
     // open with read, write, exec for owner and read only for group and other/everyone else.
     int fd = open(writefile, O_RDWR | O_APPEND | O_CREAT | O_TRUNC, 0644);  // Note: The umask is 0002.
-    syslog (LOG_DEBUG, "fd = %d / errno = %d", fd, errno);
+    LOGD("fd = %d / errno = %d (2 = created file with open(), and 20 = not a directory.)", fd, errno);
 
     if (fd == -1) {
-        syslog (LOG_ERR, "Error: open() failed");
+        LOGE("Error: open() failed");
     }
-
 
     ssize_t byte_count_written = write (fd, writestr, writestr_length);
 
     if (byte_count_written == -1) {
         /* error, check errno */
         perror("write() failed");
-        syslog (LOG_ERR, "Could not write to file.");
+        LOGE("Could not write to file.");
         exit(1);
     } else if (((size_t)byte_count_written) != writestr_length) {
         /* possible error, but 'errno' not set */
         if(byte_count_written != 0) {
-            syslog (LOG_ERR, "Error: Partial write performed.");
+            LOGE("Error: Partial write performed.");
             exit(1);
         }
     }
@@ -177,10 +191,10 @@ int main(int argc, char *argv[]) {
     // ssize_t bytesRead = read_complete_segment(fd, &buf_word, buf_len);
     // if (bytesRead == -1) {
     //     perror ("Error: read() failed");  // Print the error description.
-    //     syslog(LOG_ERR, "Error: read() failed");  // Not recoverable error.
+    //     LOGE("Error: read() failed");  // Not recoverable error.
     // } else if (bytesRead == -2) {
     //     perror ("Error: read() failed (non-blocking read was issued)");  // Print the error description.
-    //     syslog(LOG_ERR, "Error: read() failed (non-blocking read was issued)");  // Not recoverable error.
+    //     LOGE("Error: read() failed (non-blocking read was issued)");  // Not recoverable error.
     // }
 
 
