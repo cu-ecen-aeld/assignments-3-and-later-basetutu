@@ -30,7 +30,7 @@ then
     exit 1
 fi
 
-echo "Searching recursively in all files:"
+echo "Searching recursively in all files: "
 echo "-----------------------------------"
 echo "Directory:   '$filesdir'"
 echo "Search for:  '$searchstr'"

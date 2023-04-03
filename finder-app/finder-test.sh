@@ -49,19 +49,22 @@ then
 		exit 1
 	fi
 fi
-#echo "Removing the old writer utility and compiling as a native application"
-#make clean
-#make
+
+echo "Removing the old writer utility and compiling as a native application"
+make clean
+make # same as "make all"
 
 for i in $( seq 1 $NUMFILES)
 do
-	./writer.sh "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+	# Running the C-application instead of the script:
+	./writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
 OUTPUTSTRING=$(./finder.sh "$WRITEDIR" "$WRITESTR")
 
 # remove temporary directories
-rm -rf /tmp/aeld-data
+rm -rf $WRITEDIR
+echo "Removed WRITEDIR"
 
 set +e
 echo ${OUTPUTSTRING} | grep "${MATCHSTR}"
