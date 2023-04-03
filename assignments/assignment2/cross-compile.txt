@@ -12,4 +12,3 @@ Configured with: /data/jenkins/workspace/GNU-toolchain/arm-10/src/gcc/configure 
 Thread model: posix
 Supported LTO compression algorithms: zlib
 gcc version 10.3.1 20210621 (GNU Toolchain for the A-profile Architecture 10.3-2021.07 (arm-10.29)) 
-
