@@ -2,6 +2,7 @@
 # Tester script for assignment 1 and assignment 2
 # Author: Siddhant Jajoo
 cd "$(dirname "$0")"
+# FILE="$(basename "$1")" # not tested
 
 set -e
 set -u

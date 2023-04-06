@@ -185,20 +185,5 @@ int main(int argc, char *argv[]) {
     if (close (fd) == -1) {
         perror("Error: close() failed");
     }
-
-    // unsigned long buf_word;  // Read buffer.
-    // int buf_len = sizeof(unsigned long);  // Number of bytes to read.
-    // ssize_t bytesRead = read_complete_segment(fd, &buf_word, buf_len);
-    // if (bytesRead == -1) {
-    //     perror ("Error: read() failed");  // Print the error description.
-    //     LOGE("Error: read() failed");  // Not recoverable error.
-    // } else if (bytesRead == -2) {
-    //     perror ("Error: read() failed (non-blocking read was issued)");  // Print the error description.
-    //     LOGE("Error: read() failed (non-blocking read was issued)");  // Not recoverable error.
-    // }
-
-
-
-
 }
 
